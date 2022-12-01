@@ -17,7 +17,7 @@ pub mod tests {
     #[test]
     fn day1() {
         let s = problem(1, 0);
-        let line = || {
+        let val= || {
             map(
                 many1(terminated(
                     map(digit1, |s: &str| s.parse::<u32>().unwrap()),
@@ -28,7 +28,7 @@ pub mod tests {
         };
         let res = {
             let x: IResult<&str, Vec<u32>> =
-                many1(alt((terminated(line(), newline), terminated(line(), eof))))(&*s);
+                many1(alt((terminated(val(), newline), terminated(val(), eof))))(&*s);
 
             let mut y = x.unwrap().1;
             y.sort();
