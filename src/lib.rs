@@ -55,9 +55,9 @@ pub mod tests {
                 1 + match outcome {
                     'X' => (if their == 0 { 2 } else { their - 1 }),
                     'Y' => their + 3,
-                    'Z' => ((their | 1 << 2) % 3)+ 6,
+                    'Z' => ((their | 1 << 2) % 3) + 6,
                     _ => panic!(),
-                } 
+                }
             })
             .sum();
 
