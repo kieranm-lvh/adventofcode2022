@@ -8,33 +8,32 @@ pub mod tests {
         IResult,
     };
 
-    fn problem(x: usize, y: usize) -> String {
-        std::fs::read_to_string(format!("{}/{}_{}.txt", env!("CARGO_MANIFEST_DIR"), x, y))
-            .expect("No file")
+    macro_rules! problem {
+        ($x:expr, $y: expr) => {
+            include_str!(concat!("../", $x, "_", $y, ".txt"))
+        };
     }
 
     #[test]
     fn day1() {
-        let s = problem(1, 0);
+        let s = problem!(1, 0);
 
-        let res = {
-            let x: IResult<&str, Vec<u32>> = many1(terminated(
-                map(
-                    many1(terminated(
-                        map(digit1, |s: &str| s.parse::<u32>().unwrap()),
-                        opt(newline),
-                    )),
-                    |v: Vec<u32>| v.iter().sum(),
-                ),
-                opt(newline),
-            ))(&*s);
+        let x: IResult<&str, Vec<u32>> = many1(terminated(
+            map(
+                many1(terminated(
+                    map(digit1, |s: &str| s.parse().unwrap()),
+                    opt(newline),
+                )),
+                |v: Vec<u32>| v.iter().sum(),
+            ),
+            opt(newline),
+        ))(s);
 
-            let mut y = x.unwrap().1;
-            y.sort();
-            y
-        };
+        let mut res = x.unwrap().1;
+        res.sort();
 
         println!("{}", res.iter().max().unwrap());
         println!("{}", &res[res.len() - 3..].iter().sum::<u32>());
     }
+
 }
