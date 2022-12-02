@@ -1,9 +1,8 @@
 #[cfg(test)]
 pub mod tests {
     use nom::{
-        branch::alt,
         character::complete::{digit1, newline},
-        combinator::{eof, map, opt},
+        combinator::{map, opt},
         multi::many1,
         sequence::terminated,
         IResult,
@@ -28,7 +27,7 @@ pub mod tests {
         };
         let res = {
             let x: IResult<&str, Vec<u32>> =
-                many1(alt((terminated(val(), newline), terminated(val(), eof))))(&*s);
+                many1(terminated(val(), opt(newline)))(&*s);
 
             let mut y = x.unwrap().1;
             y.sort();
