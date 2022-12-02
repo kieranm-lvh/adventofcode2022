@@ -16,18 +16,18 @@ pub mod tests {
     #[test]
     fn day1() {
         let s = problem(1, 0);
-        let val= || {
-            map(
-                many1(terminated(
-                    map(digit1, |s: &str| s.parse::<u32>().unwrap()),
-                    opt(newline),
-                )),
-                |v: Vec<u32>| v.iter().sum(),
-            )
-        };
+
         let res = {
-            let x: IResult<&str, Vec<u32>> =
-                many1(terminated(val(), opt(newline)))(&*s);
+            let x: IResult<&str, Vec<u32>> = many1(terminated(
+                map(
+                    many1(terminated(
+                        map(digit1, |s: &str| s.parse::<u32>().unwrap()),
+                        opt(newline),
+                    )),
+                    |v: Vec<u32>| v.iter().sum(),
+                ),
+                opt(newline),
+            ))(&*s);
 
             let mut y = x.unwrap().1;
             y.sort();
