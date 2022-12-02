@@ -44,7 +44,7 @@ pub mod tests {
 
     #[test]
     fn day2_part2() {
-        let s = problem!(2, 0);
+        let s = problem!(2, 1);
 
         let res: u32 = s
             .lines()
@@ -53,8 +53,8 @@ pub mod tests {
                 let outcome = line.chars().nth(2).unwrap();
 
                 match outcome {
-                    'Y' => their + 1 + 3,
                     'X' => (if their == 0 { 2 } else { their - 1 }) + 1,
+                    'Y' => their + 1 + 3,
                     'Z' => ((their | 1 << 2) % 3) + 1 + 6,
                     _ => panic!(),
                 }
