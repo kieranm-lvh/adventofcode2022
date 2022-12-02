@@ -52,15 +52,12 @@ pub mod tests {
                 let their = line.chars().nth(0).unwrap() as u32 - 65;
                 let outcome = line.chars().nth(2).unwrap();
 
-                let score = match outcome {
+                match outcome {
                     'Y' => their + 1 + 3,
                     'X' => (if their == 0 { 2 } else { their - 1 }) + 1,
                     'Z' => ((their | 1 << 2) % 3) + 1 + 6,
                     _ => panic!(),
-                };
-                println!("{}", score);
-
-                score
+                }
             })
             .sum();
 
