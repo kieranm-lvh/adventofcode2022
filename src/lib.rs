@@ -10,13 +10,66 @@ pub mod tests {
 
     macro_rules! problem {
         ($x:expr, $y: expr) => {
-            include_str!(concat!("../", $x, "_", $y, ".txt"))
+            include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/",
+                $x,
+                "_",
+                $y,
+                ".txt"
+            ))
         };
     }
 
     #[test]
+    fn day2_part1() {
+        let s = problem!(2, 1);
+        let res: u32 = s
+            .lines()
+            .map(|line| {
+                let their = line.chars().nth(0).unwrap() as u32 - 65;
+                let mine = line.chars().nth(2).unwrap() as u32 - 23 - 65;
+
+                if their == mine {
+                    mine + 1 + 3
+                } else if ((their | 1 << 2) - (mine | 0 << 2)) % 3 != 0 {
+                    mine + 1
+                } else {
+                    mine + 1 + 6
+                }
+            })
+            .sum();
+        println!("{}", res)
+    }
+
+    #[test]
+    fn day2_part2() {
+        let s = problem!(2, 1);
+
+        let res: u32 = s
+            .lines()
+            .map(|line| {
+                let their = line.chars().nth(0).unwrap() as u32 - 65;
+                let outcome = line.chars().nth(2).unwrap();
+
+                let score = match outcome {
+                    'Y' => their + 1 + 3,
+                    'X' => (if their == 0 { 2 } else { their - 1 }) + 1,
+                    'Z' => ((their | 1 << 2) % 3) + 1 + 6,
+                    _ => panic!(),
+                };
+                println!("{}", score);
+
+                score
+            })
+            .sum();
+
+        println!("{}", res)
+    }
+
+    #[test]
     fn day1() {
-        let s = problem!(1, 0);
+        let s = problem!(1, 1);
 
         let x: IResult<&str, Vec<u32>> = many1(terminated(
             map(
@@ -35,5 +88,4 @@ pub mod tests {
         println!("{}", res.iter().max().unwrap());
         println!("{}", &res[res.len() - 3..].iter().sum::<u32>());
     }
-
 }
