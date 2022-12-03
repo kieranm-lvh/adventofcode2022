@@ -30,7 +30,7 @@ fn day3_part2() {
         .lines()
         .chunks(3)
         .into_iter()
-        .fold(0, |total, chunk| {
+        .fold(0, |total, chunk| 
             (match chunk
                 .map(|line| {
                     line.chars()
@@ -46,7 +46,7 @@ fn day3_part2() {
             } as u64)
                 + 1
                 + total
-        });
+        );
     println!("{}", total);
 }
 
