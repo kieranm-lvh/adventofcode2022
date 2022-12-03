@@ -23,45 +23,41 @@ pub mod tests {
 
     #[test]
     fn day2_part1() {
-        println!(
-            "{}",
-            problem!(2, 1).lines().fold(0, |acc, line| {
-                let their = line.chars().nth(0).unwrap() as u32 - 65;
-                let mine = line.chars().nth(2).unwrap() as u32 - 23 - 65;
-                acc + 1
-                    + if their == mine {
-                        mine + 3
-                    } else if ((their | 1 << 2) - (mine | 0 << 2)) % 3 != 0 {
-                        mine
-                    } else {
-                        mine + 6
-                    }
-            })
-        );
+        let res = problem!(2, 1).lines().fold(0, |acc, line| {
+            let their = line.chars().nth(0).unwrap() as u32 - 65;
+            let mine = line.chars().nth(2).unwrap() as u32 - 23 - 65;
+            acc + 1
+                + if their == mine {
+                    mine + 3
+                } else if ((their | 1 << 2) - (mine | 0 << 2)) % 3 != 0 {
+                    mine
+                } else {
+                    mine + 6
+                }
+        });
+        println!("{}", res);
     }
 
     #[test]
     fn day2_part2() {
-        println!(
-            "{}",
-            problem!(2, 1).lines().fold(0, |acc, line| {
-                let their = line.chars().nth(0).unwrap() as u32 - 65;
-                let outcome = line.chars().nth(2).unwrap();
-                acc + 1
-                    + match outcome {
-                        'X' => {
-                            if their == 0 {
-                                2
-                            } else {
-                                their - 1
-                            }
+        let res = problem!(2, 1).lines().fold(0, |acc, line| {
+            let their = line.chars().nth(0).unwrap() as u32 - 65;
+            let outcome = line.chars().nth(2).unwrap();
+            acc + 1
+                + match outcome {
+                    'X' => {
+                        if their == 0 {
+                            2
+                        } else {
+                            their - 1
                         }
-                        'Y' => their + 3,
-                        'Z' => (their | 1 << 2) % 3 + 6,
-                        _ => panic!(),
                     }
-            })
-        );
+                    'Y' => their + 3,
+                    'Z' => (their | 1 << 2) % 3 + 6,
+                    _ => panic!(),
+                }
+        });
+        println!("{}", res);
     }
 
     #[test]
