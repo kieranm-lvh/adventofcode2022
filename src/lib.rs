@@ -23,6 +23,30 @@ macro_rules! problem {
     };
 }
 
+
+#[test]
+fn day3_part1() {
+    let res: u32 = problem!(3, 1).lines().fold(0_u32, |acc, line| {
+        let mut compartments = [0_u64; 2];
+        for (index, comp) in compartments.iter_mut().enumerate() {
+            let line_half_start = index * line.len() / 2;
+            let line_half: &str = &line[line_half_start..line_half_start + line.len() / 2];
+            for c in line_half.chars() {
+                *comp |= 1_u64 << (c as u8 - b'A');
+            }
+        }
+
+        1 + acc
+            + match (compartments[0] & compartments[1]).trailing_zeros() as u8 + b'A' {
+                v @ b'a'..=b'z' => v - b'a',
+                v @ b'A'..=b'Z' => v - b'A' + 26,
+                _ => panic!(),
+            } as u32
+    });
+    println!("{}", res);
+}
+
+
 //2607
 #[test]
 fn day3_part2() {
@@ -48,28 +72,6 @@ fn day3_part2() {
                 + total
         );
     println!("{}", total);
-}
-
-#[test]
-fn day3_part1() {
-    let res: u32 = problem!(3, 1).lines().fold(0_u32, |acc, line| {
-        let mut compartments = [0_u64; 2];
-        for (index, comp) in compartments.iter_mut().enumerate() {
-            let line_half_start = index * line.len() / 2;
-            let line_half: &str = &line[line_half_start..line_half_start + line.len() / 2];
-            for c in line_half.chars() {
-                *comp |= 1_u64 << (c as u8 - b'A');
-            }
-        }
-
-        1 + acc
-            + match (compartments[0] & compartments[1]).trailing_zeros() as u8 + b'A' {
-                v @ b'a'..=b'z' => v - b'a',
-                v @ b'A'..=b'Z' => v - b'A' + 26,
-                _ => panic!(),
-            } as u32
-    });
-    println!("{}", res);
 }
 
 #[test]
