@@ -22,6 +22,33 @@ macro_rules! problem {
 }
 
 #[test]
+fn day3_part2() {
+    let mut lines = problem!(3, 1).lines().peekable();
+
+    let mut total = 0;
+    while lines.peek().is_some() {
+        let mut three = [0_u64; 3];
+
+        (&mut lines)
+            .take(3)
+            .zip(three.iter_mut())
+            .for_each(|(line, val)| {
+                for c in line.chars() {
+                    *val |= 1_u64 << (c as u8 - b'A');
+                }
+            });
+
+        let val = 1 + match (three[0] & three[1] & three[2]).trailing_zeros() as u8 + b'A' {
+            v @ b'a'..=b'z' => v - b'a',
+            v @ b'A'..=b'Z' => v - b'A' + 26,
+            _ => panic!(),
+        } as u64;
+        total += val;
+    }
+    println!("{}", total);
+}
+
+#[test]
 fn day3_part1() {
     let res: u32 = problem!(3, 1).lines().fold(0_u32, |acc, line| {
         let mut compartments = [0_u64; 2];
