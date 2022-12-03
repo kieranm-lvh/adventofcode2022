@@ -1,7 +1,5 @@
 #![allow(dead_code, unused_imports, unused_macros)]
 
-
-
 use nom::{
     character::complete::{digit1, newline},
     combinator::{map, opt},
@@ -25,27 +23,25 @@ macro_rules! problem {
 
 #[test]
 fn day3_part1() {
-    let res: u32 = problem!(3, 1)
-        .lines()
-        .map(|line| {
-            let mut compartments = [0_u64; 2];
-            for (index, comp) in compartments.iter_mut().enumerate() {
-                let line_half_start = index * (line.len() / 2);
+    let res: u32 = problem!(3, 1).lines().fold(0_u32, |acc, line| {
+        let mut compartments = [0_u64; 2];
+        for (index, comp) in compartments.iter_mut().enumerate() {
+            let line_half_start = index * (line.len() / 2);
 
-                let line_half: &str = &line[line_half_start..line_half_start + line.len() / 2];
+            let line_half: &str = &line[line_half_start..line_half_start + line.len() / 2];
 
-                line_half.chars().for_each(|c| {
-                    *comp |= 1_u64 << (c as u8 - b'A');
-                })
-            }
+            line_half.chars().for_each(|c| {
+                *comp |= 1_u64 << (c as u8 - b'A');
+            })
+        }
 
-            (match (compartments[0] & compartments[1]).trailing_zeros() as u8 + b'A' {
-                v @ b'a'..=b'z' => v - b'a' ,
-                v @ b'A'..=b'Z' => v - b'A'  + 26,
+        1 + acc
+            + match (compartments[0] & compartments[1]).trailing_zeros() as u8 + b'A' {
+                v @ b'a'..=b'z' => v - b'a',
+                v @ b'A'..=b'Z' => v - b'A' + 26,
                 _ => panic!(),
-            }+1) as u32
-        })
-        .sum();
+            } as u32
+    });
     println!("{}", res);
 }
 
