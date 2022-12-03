@@ -51,9 +51,9 @@ fn day3_part2() {
 #[test]
 fn day3_part1() {
     let res: u32 = problem!(3, 1).lines().fold(0_u32, |acc, line| {
-        let mut compartments = [0_u64; 2];
-        for (index, comp) in compartments.iter_mut().enumerate() {
-            let line_half_start = index * line.len() / 2;
+        let mut compartments = [0_u64, 1];
+        for comp in compartments.iter_mut() {
+            let line_half_start = *comp as usize * line.len() / 2;
             let line_half: &str = &line[line_half_start..line_half_start + line.len() / 2];
             for c in line_half.chars() {
                 *comp |= 1_u64 << (c as u8 - b'A');
