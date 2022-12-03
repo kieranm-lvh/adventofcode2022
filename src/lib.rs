@@ -27,9 +27,7 @@ fn day3_part1() {
         let mut compartments = [0_u64; 2];
         for (index, comp) in compartments.iter_mut().enumerate() {
             let line_half_start = index * (line.len() / 2);
-
             let line_half: &str = &line[line_half_start..line_half_start + line.len() / 2];
-
             line_half.chars().for_each(|c| {
                 *comp |= 1_u64 << (c as u8 - b'A');
             })
