@@ -1,5 +1,6 @@
 #![allow(dead_code, unused_imports, unused_macros)]
 
+use itertools::Itertools;
 use nom::{
     character::complete::{digit1, newline},
     combinator::{map, opt},
@@ -7,6 +8,7 @@ use nom::{
     sequence::terminated,
     IResult,
 };
+use std::iter;
 
 macro_rules! problem {
     ($x:expr, $y: expr) => {
@@ -21,30 +23,30 @@ macro_rules! problem {
     };
 }
 
+//2607
 #[test]
 fn day3_part2() {
-    let mut lines = problem!(3, 1).lines().peekable();
-
-    let mut total = 0;
-    while lines.peek().is_some() {
-        let mut three = [0_u64; 3];
-
-        (&mut lines)
-            .take(3)
-            .zip(three.iter_mut())
-            .for_each(|(line, val)| {
-                for c in line.chars() {
-                    *val |= 1_u64 << (c as u8 - b'A');
-                }
-            });
-
-        let val = 1 + match (three[0] & three[1] & three[2]).trailing_zeros() as u8 + b'A' {
-            v @ b'a'..=b'z' => v - b'a',
-            v @ b'A'..=b'Z' => v - b'A' + 26,
-            _ => panic!(),
-        } as u64;
-        total += val;
-    }
+    let total = problem!(3, 1)
+        .lines()
+        .chunks(3)
+        .into_iter()
+        .fold(0, |total, chunk| {
+            (match chunk
+                .map(|line| {
+                    line.chars()
+                        .fold(0_u64, |acc, c| acc | 1_u64 << (c as u8 - b'A'))
+                })
+                .fold(u64::MAX, |acc, next| acc & next)
+                .trailing_zeros() as u8
+                + b'A'
+            {
+                v @ b'a'..=b'z' => v - b'a',
+                v @ b'A'..=b'Z' => v - b'A' + 26,
+                _ => panic!(),
+            } as u64)
+                + 1
+                + total
+        });
     println!("{}", total);
 }
 
