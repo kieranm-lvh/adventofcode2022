@@ -35,15 +35,6 @@ macro_rules! problem {
 
 #[test]
 fn day11_part1() {
-    macro_rules! to_u32 {
-        ( $x:expr) => {
-            map($x, |y| str::parse::<u32>(y).unwrap())
-        };
-    }
-
-    let take_n = take::<usize, _, ()>;
-    let digit1_at = |offset| preceded(take_n(offset), digit1);
-
     macro_rules! alias_types{
         () => {};
         ($root: ident) => {};
@@ -57,6 +48,7 @@ fn day11_part1() {
     }
 
     alias_types!(u32, MonkeyID, TestDivisor, ItemWorry);
+
     type Chunk<'a> = (
         MonkeyID,
         Vec<ItemWorry>,
@@ -65,6 +57,16 @@ fn day11_part1() {
         MonkeyID,
         MonkeyID,
     );
+
+    macro_rules! to_u32 {
+        ( $x:expr) => {
+            map($x, |y| str::parse::<u32>(y).unwrap())
+        };
+    }
+
+    let take_n = take::<usize, _, ()>;
+    let digit1_at = |offset| preceded(take_n(offset), digit1);
+
     let chunk = tuple((
         to_u32!(terminated(
             preceded(take_n(7), digit1),
@@ -79,7 +81,7 @@ fn day11_part1() {
         to_u32!(digit1_at(30)),                 //  If true: throw to monkey 1
         to_u32!(digit1_at(31)),                 //  If false: throw to monkey 3
     ));
-    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 1))
+    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 0))
         .unwrap()
         .1;
 
@@ -88,11 +90,11 @@ fn day11_part1() {
         monkey_has_items: Vec<Vec<ItemWorry>>,
         monkey_inspect_counts: Vec<usize>,
     }
-    impl Default for State { 
-        fn default () -> Self { 
-            State { 
+    impl Default for State {
+        fn default() -> Self {
+            State {
                 monkey_has_items: vec![vec![]; 10],
-                monkey_inspect_counts: vec![0;10],
+                monkey_inspect_counts: vec![0; 10],
             }
         }
     }
