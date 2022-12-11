@@ -44,7 +44,7 @@ fn day11_part1() {
     let take_n = take::<usize, _, ()>;
     let digit1_at = |offset| preceded(take_n(offset), digit1);
 
-    macro_rules! bind_types{
+    macro_rules! alias_types{
         () => {};
         ($root: ident) => {};
         ($root: ident, $x: ident) => {
@@ -52,11 +52,11 @@ fn day11_part1() {
         };
         ($root: ident, $x: ident,$($more:tt)*) => {
             type $x = $root;
-            bind_types!( $root,$($more)*)
+            alias_types!( $root,$($more)*)
         };
     }
 
-    bind_types!(u32, MonkeyID, TestDivisor, ItemWorry);
+    alias_types!(u32, MonkeyID, TestDivisor, ItemWorry);
     type Chunk<'a> = (
         MonkeyID,
         Vec<ItemWorry>,
