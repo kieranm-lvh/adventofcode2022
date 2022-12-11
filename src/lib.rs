@@ -81,7 +81,7 @@ fn day11_part1() {
         to_u32!(digit1_at(30)),                 //  If true: throw to monkey 1
         to_u32!(digit1_at(31)),                 //  If false: throw to monkey 3
     ));
-    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 0))
+    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 1))
         .unwrap()
         .1;
 
