@@ -2,10 +2,15 @@
 
 use itertools::Itertools;
 use nom::{
-    character::complete::{digit1, newline},
-    combinator::{map, opt},
-    multi::many1,
-    sequence::terminated,
+    branch::alt,
+    bytes::complete::{tag, take, take_till, take_till1, take_until},
+    character::{
+        complete::{alpha0, alpha1, alphanumeric0, digit1, line_ending, newline, space0, space1},
+        is_digit, is_newline,
+    },
+    combinator::{eof, map, not, opt, map_res},
+    multi::{many0, many1},
+    sequence::{preceded, terminated, tuple},
     IResult,
 };
 use std::iter;
@@ -22,13 +27,55 @@ macro_rules! problem {
         ))
     };
 }
+
+#[test]
+fn day11_part1() {
+    let input = problem!(11, 0);
+    let to_u32 = |x| map(x,  str::parse::<u32>);
+    let take_n = take::<usize, _, ()>;
+    let digit1_at = |offset| preceded(take_n(offset), digit1);
+    let chunk = tuple((
+        map(terminated(preceded(take_n(7), digit1), tuple((tag(":"), newline))), str::parse::<u32>), //Monkey 0:
+        preceded(take_n(18), many1(map(terminated(digit1, opt(tag(", "))),  str::parse::<u32>))), //  Starting items: 79, 98
+        preceded(take_n(24), take_until("\n")), //   Operation: new = old * 19
+        map(digit1_at(22), str::parse::<u32>),                          //  Test: divisible by 23
+        map(digit1_at(30),str::parse::<u32>),                          //  If true: throw to monkey 1
+        to_u32(digit1_at(31))   //  If false: throw to monkey 3
+    ));
+
+    let res = (many1(terminated(chunk, opt(tag("\n\n")))))(input);
+
+    println!("{:#?}", res);
+}
+
+#[test]
+fn day10_part1() {
+    macro_rules! comptime(($x:expr) =>{ $x() } );
+
+    struct State {
+        counter: u32,
+        register: i32,
+        buf: u8,
+    }
+
+    let input = problem!(10, 0);
+
+    input
+        .lines()
+        .fold((0, 1), |(c, x), v| match v.chars().nth(0) {
+            Some('n') => (c + 1, x),
+            Some('a') => (c + 2, x + str::parse::<i32>(&v[5..]).unwrap()),
+            None | Some(_) => panic!(),
+        });
+}
+
 #[test]
 fn day3_part2() {
     let total = problem!(3, 1)
         .lines()
         .chunks(3)
         .into_iter()
-        .fold(0, |total, chunk| 
+        .fold(0, |total, chunk| {
             (match chunk
                 .map(|line| {
                     line.chars()
@@ -44,7 +91,7 @@ fn day3_part2() {
             } as u64)
                 + 1
                 + total
-        );
+        });
     println!("{}", total);
 }
 
@@ -69,9 +116,6 @@ fn day3_part1() {
     });
     println!("{}", res);
 }
-
-
-
 
 #[test]
 fn day2_part1() {
