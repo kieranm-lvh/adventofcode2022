@@ -10,10 +10,15 @@ use nom::{
     },
     combinator::{eof, map, map_res, not, opt},
     multi::{many0, many1},
+    number::complete::u32,
     sequence::{preceded, terminated, tuple},
     IResult,
 };
-use std::iter;
+use std::{
+    collections::{HashMap, HashSet},
+    iter,
+    marker::PhantomData,
+};
 
 macro_rules! problem {
     ($x:expr, $y: expr) => {
@@ -30,52 +35,164 @@ macro_rules! problem {
 
 #[test]
 fn day11_part1() {
-    let input = problem!(11, 0);
-    let to_u32 = |x| map(x, |y| str::parse::<u32>(y).unwrap());
-    let take_n = take::<usize, _, ()>;
-    let digit1_at = |offset| preceded(take_n(offset), digit1);
-    let chunk = tuple((
-        map(
-            terminated(preceded(take_n(7), digit1), tuple((tag(":"), newline))),
-            |y| str::parse::<u32>(y).unwrap(),
-        ), //Monkey 0:
-        preceded(
-            take_n(18),
-            many1(map(terminated(digit1, opt(tag(", "))), |y| {
-                str::parse::<u32>(y).unwrap()
-            })),
-        ), //  Starting items: 79, 98
-        preceded(take_n(24), take_until("\n")), //   Operation: new = old * 19
-        to_u32(digit1_at(22)),                  //  Test: divisible by 23
-        to_u32(digit1_at(30)),                  //  If true: throw to monkey 1
-        to_u32(digit1_at(31)),                  //  If false: throw to monkey 3
-    ));
-
-    let res = (many1(terminated(chunk, opt(tag("\n\n")))))(input);
-
-    println!("{:#?}", res);
-}
-
-#[test]
-fn day10_part1() {
-    macro_rules! comptime(($x:expr) =>{ $x() } );
-
-    struct State {
-        counter: u32,
-        register: i32,
-        buf: u8,
+    macro_rules! to_u32 {
+        ( $x:expr) => {
+            map($x, |y| str::parse::<u32>(y).unwrap())
+        };
     }
 
-    let input = problem!(10, 0);
+    let take_n = take::<usize, _, ()>;
+    let digit1_at = |offset| preceded(take_n(offset), digit1);
 
-    input
-        .lines()
-        .fold((0, 1), |(c, x), v| match v.chars().nth(0) {
-            Some('n') => (c + 1, x),
-            Some('a') => (c + 2, x + str::parse::<i32>(&v[5..]).unwrap()),
-            None | Some(_) => panic!(),
-        });
+    macro_rules! bind_types{
+        () => {};
+        ($root: ident) => {};
+        ($root: ident, $x: ident) => {
+            type $x = $root;
+        };
+        ($root: ident, $x: ident,$($more:tt)*) => {
+            type $x = $root;
+            bind_types!( $root,$($more)*)
+        };
+    }
+
+    bind_types!(u32, MonkeyID, TestDivisor, ItemWorry);
+    type Chunk<'a> = (
+        MonkeyID,
+        Vec<ItemWorry>,
+        &'a str,
+        TestDivisor,
+        MonkeyID,
+        MonkeyID,
+    );
+    let chunk = tuple((
+        to_u32!(terminated(
+            preceded(take_n(7), digit1),
+            tuple((tag(":"), newline))
+        )), //Monkey 0:
+        preceded(
+            take_n(18),
+            many1(to_u32!(terminated(digit1, opt(tag(", "))))),
+        ), //  Starting items: 79, 98
+        preceded(take_n(24), take_until("\n")), //   Operation: new = old * 19
+        to_u32!(digit1_at(22)),                 //  Test: divisible by 23
+        to_u32!(digit1_at(30)),                 //  If true: throw to monkey 1
+        to_u32!(digit1_at(31)),                 //  If false: throw to monkey 3
+    ));
+    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 0))
+        .unwrap()
+        .1;
+    #[derive(Default, Debug)]
+    struct State {
+        monkey_has_items: [Vec<ItemWorry>; 10],
+        monkey_inspect_counts: [usize; 10],
+    }
+
+    let reduce_parse_res = |mut state: State,
+                            (
+        monkey_id,
+        starting_items,
+        operation,
+        test_divisor,
+        if_true_monkey,
+        if_false_monkey,
+    ): &Chunk| {
+        
+        let all_items = state.monkey_has_items[*monkey_id as usize].clone();
+        /*
+         Operation shows how your worry level changes as that monkey inspects an item.
+         (An operation like new = old * 5 means that your worry level after the monkey
+         inspected the item is five times whatever your worry level was before inspection.)
+        */
+
+
+
+        for item in all_items {
+           state.monkey_inspect_counts[*monkey_id as usize] += 1; 
+            macro_rules! handle_op_code {
+                ($op:expr) => {
+                    map(
+                        tuple((
+                            terminated(tag::<_, _, ()>($op), space0),
+                            alt((map(tag("old"), |_| item), to_u32!(digit1))),
+                        )),
+                        |x| match $op {
+                            "+" => item + x.1,
+                            "*" => item * x.1,
+                            "-" => item - x.1,
+                            "/" => item / x.1,
+                            _ => panic!(),
+                        },
+                    )
+                };
+            }
+
+            let worry_while_inspect: u32 = alt((
+                handle_op_code!("+"),
+                handle_op_code!("*"),
+                handle_op_code!("-"),
+                handle_op_code!("/"),
+            ))(&operation)
+            .unwrap()
+            .1;
+
+            /*
+            After each monkey inspects an item but before it tests your worry level,
+            your relief that the monkey's inspection didn't damage the item causes
+            your worry level to be divided by three and rounded down to the nearest integer.
+            */
+            let worry_after_bored = f32::floor(worry_while_inspect as f32 / 3f32) as ItemWorry;
+
+            //Test shows how the monkey uses your worry level to decide where to throw an item next.
+
+            let test = worry_after_bored % test_divisor == 0;
+
+            let receiving_monkey = match test {
+                true => if_true_monkey,
+                false => if_false_monkey,
+            };
+            state.monkey_has_items[*receiving_monkey as usize].push(worry_after_bored);
+        }
+
+        for entry in state.monkey_has_items.iter_mut() { 
+            entry.clear();
+        }
+
+        state
+    };
+
+
+    // let r = 
+    // (0..20).fold( State::default, |a, _|   parse_res.iter().fold(a,     reduce_parse_res));
+
+    let mut state = State::default();
+    for _ in 0..10 { 
+        state = parse_res.iter().fold(state, reduce_parse_res );
+    }
+
+    println!("{:?}", state.monkey_inspect_counts)
+
 }
+
+// use paste::paste;
+// #[test]
+// fn day10_part1() {
+//     struct State {
+//         counter: u32,
+//         register: i32,
+//         buf: u8,
+//     }
+
+//     let input = problem!(10, 0);
+
+//     input
+//         .lines()
+//         .fold((0, 1), |(c, x), v| match v.chars().nth(0) {
+//             Some('n') => (c + 1, x),
+//             Some('a') => (c + 2, x + str::parse::<i32>(&v[5..]).unwrap()),
+//             None | Some(_) => panic!(),
+//         });
+// }
 
 #[test]
 fn day3_part2() {
