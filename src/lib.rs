@@ -8,7 +8,7 @@ use nom::{
         complete::{alpha0, alpha1, alphanumeric0, digit1, line_ending, newline, space0, space1},
         is_digit, is_newline,
     },
-    combinator::{eof, map, not, opt, map_res},
+    combinator::{eof, map, map_res, not, opt},
     multi::{many0, many1},
     sequence::{preceded, terminated, tuple},
     IResult,
@@ -31,16 +31,24 @@ macro_rules! problem {
 #[test]
 fn day11_part1() {
     let input = problem!(11, 0);
-    let to_u32 = |x| map(x,  str::parse::<u32>);
+    let to_u32 = |x| map(x, |y| str::parse::<u32>(y).unwrap());
     let take_n = take::<usize, _, ()>;
     let digit1_at = |offset| preceded(take_n(offset), digit1);
     let chunk = tuple((
-        map(terminated(preceded(take_n(7), digit1), tuple((tag(":"), newline))), str::parse::<u32>), //Monkey 0:
-        preceded(take_n(18), many1(map(terminated(digit1, opt(tag(", "))),  str::parse::<u32>))), //  Starting items: 79, 98
+        map(
+            terminated(preceded(take_n(7), digit1), tuple((tag(":"), newline))),
+            |y| str::parse::<u32>(y).unwrap(),
+        ), //Monkey 0:
+        preceded(
+            take_n(18),
+            many1(map(terminated(digit1, opt(tag(", "))), |y| {
+                str::parse::<u32>(y).unwrap()
+            })),
+        ), //  Starting items: 79, 98
         preceded(take_n(24), take_until("\n")), //   Operation: new = old * 19
-        map(digit1_at(22), str::parse::<u32>),                          //  Test: divisible by 23
-        map(digit1_at(30),str::parse::<u32>),                          //  If true: throw to monkey 1
-        to_u32(digit1_at(31))   //  If false: throw to monkey 3
+        to_u32(digit1_at(22)),                  //  Test: divisible by 23
+        to_u32(digit1_at(30)),                  //  If true: throw to monkey 1
+        to_u32(digit1_at(31)),                  //  If false: throw to monkey 3
     ));
 
     let res = (many1(terminated(chunk, opt(tag("\n\n")))))(input);
