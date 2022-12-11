@@ -79,41 +79,58 @@ fn day11_part1() {
         to_u32!(digit1_at(30)),                 //  If true: throw to monkey 1
         to_u32!(digit1_at(31)),                 //  If false: throw to monkey 3
     ));
-    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 0))
+    let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 1))
         .unwrap()
         .1;
 
-    #[derive(Default, Debug)]
+    #[derive(Debug)]
     struct State {
-        monkey_has_items: Vec<Option<Vec<ItemWorry>>>,
+        monkey_has_items: Vec<Vec<ItemWorry>>,
         monkey_inspect_counts: Vec<usize>,
     }
-
-    let mut state = State::default();
-
-    for round in 0..20 {
-        for (monkey_id, starting_items, operation, test_divisor, if_true_monkey, if_false_monkey) in
-            &parse_res
-        {
-            if let None = state.monkey_has_items[*monkey_id as usize] {
-                state.monkey_has_items[*monkey_id as usize] = Some(starting_items.clone());
-            }
-
-            if let Some(items) = state.monkey_has_items[*monkey_id as usize].as_mut() {
-                for item in items {
-                    let x = operation[2..].parse::<u32>().unwrap_or(*item);
-
-                    match operation.chars().nth(0).unwrap() {
-                        '*' => { *item * x},
-                        '-' => { *item - x},
-                        '+' => { *item + x},
-                        '/' => { *item / x},
-                        _ => panic!()
-                    };
-                }
+    impl Default for State { 
+        fn default () -> Self { 
+            State { 
+                monkey_has_items: vec![vec![]; 10],
+                monkey_inspect_counts: vec![0;10],
             }
         }
     }
+
+    let mut state = State::default();
+    for (monkey_id, starting_items, ..) in &parse_res {
+        state.monkey_has_items[*monkey_id as usize] = starting_items.clone();
+    }
+    for _round in 0..20 {
+        for (monkey_id, _, operation, test_divisor, if_true_monkey, if_false_monkey) in &parse_res {
+            let items: Vec<u32> = state.monkey_has_items[*monkey_id as usize].clone();
+            for item in items {
+                let x = operation[2..].parse::<u32>().unwrap_or(item);
+
+                let inspect_worry = match operation.chars().nth(0).unwrap() {
+                    '*' => item * x,
+                    '-' => item - x,
+                    '+' => item + x,
+                    '/' => item / x,
+                    _ => panic!(),
+                };
+
+                let post_inspect_worry = f32::floor(inspect_worry as f32 / 3f32) as u32;
+
+                let test = post_inspect_worry % test_divisor == 0;
+                let target_monkey_id = match test {
+                    true => if_true_monkey,
+                    false => if_false_monkey,
+                };
+                state.monkey_has_items[*target_monkey_id as usize].push(post_inspect_worry);
+                state.monkey_inspect_counts[*monkey_id as usize] += 1;
+            }
+            state.monkey_has_items[*monkey_id as usize].clear();
+        }
+    }
+    let mut sort_list = state.monkey_inspect_counts;
+    sort_list.sort();
+    println!("{:?}", sort_list.pop().unwrap() * sort_list.pop().unwrap());
 }
 
 // use paste::paste;
