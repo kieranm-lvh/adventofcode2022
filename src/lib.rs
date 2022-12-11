@@ -82,96 +82,38 @@ fn day11_part1() {
     let parse_res: Vec<Chunk> = many1(terminated(chunk, opt(tag("\n\n"))))(problem!(11, 0))
         .unwrap()
         .1;
+
     #[derive(Default, Debug)]
     struct State {
-        monkey_has_items: [Vec<ItemWorry>; 10],
-        monkey_inspect_counts: [usize; 10],
+        monkey_has_items: Vec<Option<Vec<ItemWorry>>>,
+        monkey_inspect_counts: Vec<usize>,
     }
-
-    let reduce_parse_res = |mut state: State,
-                            (
-        monkey_id,
-        starting_items,
-        operation,
-        test_divisor,
-        if_true_monkey,
-        if_false_monkey,
-    ): &Chunk| {
-        
-        let all_items = state.monkey_has_items[*monkey_id as usize].clone();
-        /*
-         Operation shows how your worry level changes as that monkey inspects an item.
-         (An operation like new = old * 5 means that your worry level after the monkey
-         inspected the item is five times whatever your worry level was before inspection.)
-        */
-
-
-
-        for item in all_items {
-           state.monkey_inspect_counts[*monkey_id as usize] += 1; 
-            macro_rules! handle_op_code {
-                ($op:expr) => {
-                    map(
-                        tuple((
-                            terminated(tag::<_, _, ()>($op), space0),
-                            alt((map(tag("old"), |_| item), to_u32!(digit1))),
-                        )),
-                        |x| match $op {
-                            "+" => item + x.1,
-                            "*" => item * x.1,
-                            "-" => item - x.1,
-                            "/" => item / x.1,
-                            _ => panic!(),
-                        },
-                    )
-                };
-            }
-
-            let worry_while_inspect: u32 = alt((
-                handle_op_code!("+"),
-                handle_op_code!("*"),
-                handle_op_code!("-"),
-                handle_op_code!("/"),
-            ))(&operation)
-            .unwrap()
-            .1;
-
-            /*
-            After each monkey inspects an item but before it tests your worry level,
-            your relief that the monkey's inspection didn't damage the item causes
-            your worry level to be divided by three and rounded down to the nearest integer.
-            */
-            let worry_after_bored = f32::floor(worry_while_inspect as f32 / 3f32) as ItemWorry;
-
-            //Test shows how the monkey uses your worry level to decide where to throw an item next.
-
-            let test = worry_after_bored % test_divisor == 0;
-
-            let receiving_monkey = match test {
-                true => if_true_monkey,
-                false => if_false_monkey,
-            };
-            state.monkey_has_items[*receiving_monkey as usize].push(worry_after_bored);
-        }
-
-        for entry in state.monkey_has_items.iter_mut() { 
-            entry.clear();
-        }
-
-        state
-    };
-
-
-    // let r = 
-    // (0..20).fold( State::default, |a, _|   parse_res.iter().fold(a,     reduce_parse_res));
 
     let mut state = State::default();
-    for _ in 0..10 { 
-        state = parse_res.iter().fold(state, reduce_parse_res );
+
+    for round in 0..20 {
+        for (monkey_id, starting_items, operation, test_divisor, if_true_monkey, if_false_monkey) in
+            &parse_res
+        {
+            if let None = state.monkey_has_items[*monkey_id as usize] {
+                state.monkey_has_items[*monkey_id as usize] = Some(starting_items.clone());
+            }
+
+            if let Some(items) = state.monkey_has_items[*monkey_id as usize].as_mut() {
+                for item in items {
+                    let x = operation[2..].parse::<u32>().unwrap_or(*item);
+
+                    match operation.chars().nth(0).unwrap() {
+                        '*' => { *item * x},
+                        '-' => { *item - x},
+                        '+' => { *item + x},
+                        '/' => { *item / x},
+                        _ => panic!()
+                    };
+                }
+            }
+        }
     }
-
-    println!("{:?}", state.monkey_inspect_counts)
-
 }
 
 // use paste::paste;
